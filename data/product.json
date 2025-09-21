@@ -1,0 +1,212 @@
+{
+  "products": [
+    {
+      "id": "9464",
+      "name": "123",
+      "category": "123",
+      "priceIn": 123,
+      "priceOut": 123,
+      "qty": 124,
+      "expiryDate": "",
+      "imgPath": "",
+      "barcode": ""
+    },
+    {
+      "id": "9834",
+      "name": "123",
+      "category": "123",
+      "priceIn": 123,
+      "priceOut": 123,
+      "qty": 123,
+      "expiryDate": "",
+      "imgPath": "",
+      "barcode": "https://qrco.de/bdC37M"
+    },
+    {
+      "id": "e148",
+      "name": "123",
+      "category": "444",
+      "priceIn": 123,
+      "priceOut": 123,
+      "qty": 123,
+      "expiryDate": "",
+      "imgPath": "",
+      "barcode": ""
+    },
+    {
+      "id": "7b06",
+      "name": "123444",
+      "category": "123",
+      "priceIn": 12,
+      "priceOut": 12,
+      "qty": 8,
+      "expiryDate": "",
+      "imgPath": "",
+      "barcode": ""
+    },
+    {
+      "id": "621a",
+      "name": "3454",
+      "category": "3422",
+      "priceIn": 1235,
+      "priceOut": 1235,
+      "qty": 1,
+      "expiryDate": "",
+      "imgPath": "",
+      "barcode": ""
+    },
+    {
+      "id": "ca1d",
+      "name": "546dgf",
+      "category": "435ret",
+      "priceIn": 345345,
+      "priceOut": 5345345,
+      "qty": 6546,
+      "expiryDate": "",
+      "imgPath": "",
+      "barcode": ""
+    },
+    {
+      "id": "2de9",
+      "name": "4567",
+      "category": "654",
+      "priceIn": 4567,
+      "priceOut": 4567,
+      "qty": 4567,
+      "expiryDate": "",
+      "imgPath": "",
+      "barcode": ""
+    },
+    {
+      "id": "9c1a",
+      "name": "1234",
+      "category": "1243",
+      "priceIn": 4231,
+      "priceOut": 5432,
+      "qty": 2345,
+      "expiryDate": "",
+      "imgPath": "",
+      "barcode": ""
+    }
+  ],
+  "settings": {
+    "item": {
+      "item": {
+        "item": {
+          "item": {
+            "passwords": [
+              {
+                "name": "الارباح",
+                "route": "/profits",
+                "password": "admin123"
+              },
+              {
+                "name": "الاحصائيات",
+                "route": "/statements",
+                "password": "admin123"
+              },
+              {
+                "name": "التقرير الاسبوعي",
+                "route": "/reports",
+                "password": "admin123"
+              },
+              {
+                "name": "الإعدادات",
+                "route": "/settings",
+                "password": "admin123"
+              }
+            ]
+          },
+          "passwords": [
+            {
+              "name": "الارباح",
+              "route": "/profits",
+              "password": ""
+            },
+            {
+              "name": "الاحصائيات",
+              "route": "/statements",
+              "password": "admin123"
+            },
+            {
+              "name": "التقرير الاسبوعي",
+              "route": "/reports",
+              "password": "admin123"
+            },
+            {
+              "name": "الإعدادات",
+              "route": "/settings",
+              "password": "admin123"
+            }
+          ]
+        },
+        "passwords": [
+          {
+            "name": "الارباح",
+            "route": "/profits",
+            "password": "admin123"
+          },
+          {
+            "name": "الاحصائيات",
+            "route": "/statements",
+            "password": "admin123"
+          },
+          {
+            "name": "التقرير الاسبوعي",
+            "route": "/reports",
+            "password": "admin123"
+          },
+          {
+            "name": "الإعدادات",
+            "route": "/settings",
+            "password": "admin123"
+          }
+        ]
+      },
+      "passwords": [
+        {
+          "name": "الارباح",
+          "route": "/profits",
+          "password": "admin123"
+        },
+        {
+          "name": "الاحصائيات",
+          "route": "/statements",
+          "password": "admin123"
+        },
+        {
+          "name": "التقرير الاسبوعي",
+          "route": "/reports",
+          "password": "admin123"
+        },
+        {
+          "name": "الإعدادات",
+          "route": "/settings",
+          "password": "admin123"
+        }
+      ]
+    },
+    "passwords": [
+      {
+        "name": "الارباح",
+        "route": "/profits",
+        "password": ""
+      },
+      {
+        "name": "الاحصائيات",
+        "route": "/statements",
+        "password": ""
+      },
+      {
+        "name": "التقرير الاسبوعي",
+        "route": "/reports",
+        "password": ""
+      },
+      {
+        "name": "الإعدادات",
+        "route": "/settings",
+        "password": ""
+      }
+    ]
+  }
+}
