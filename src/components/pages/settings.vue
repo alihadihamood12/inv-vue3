@@ -36,8 +36,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, getCurrentInstance } from 'vue';
 import axios from 'axios';
+
+// الوصول إلى $api
+const { appContext } = getCurrentInstance();
+const API_BASE = appContext.config.globalProperties.$api;
 
 // إعدادات الباركود
 const barcodeEnabled = ref(false);
@@ -52,13 +56,12 @@ onMounted(() => {
   fetchPasswords();
 });
 
-
 const passwords = ref([]);
 const dirtyRows = ref([]);
 
 async function fetchPasswords() {
   try {
-    const res = await axios.get('http://localhost:3000/settings');
+    const res = await axios.get(`${API_BASE}/settings`);
     if (res.data && Array.isArray(res.data.passwords)) {
       passwords.value = res.data.passwords.map(row => ({ ...row }));
     }
@@ -73,7 +76,7 @@ function markDirty(idx) {
 
 async function savePasswords() {
   try {
-    await axios.patch('http://localhost:3000/settings', { passwords: passwords.value });
+    await axios.patch(`${API_BASE}/settings`, { passwords: passwords.value });
     dirtyRows.value = [];
     alert('تم حفظ كلمات المرور بنجاح!');
   } catch (e) {
@@ -88,8 +91,8 @@ function saveBarcodeSettings() {
 
 watch(barcodeEnabled, saveBarcodeSettings);
 watch(barcodeMode, saveBarcodeSettings);
-
 </script>
+
 
 <style scoped>
 .settings-box {

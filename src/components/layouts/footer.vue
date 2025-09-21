@@ -6,7 +6,7 @@
     <p>قائمة الوصولات</p>
     <ul>
     <li><label for="receiptId">🔎 إدخال رقم عملية البيع:</label>
-      <input v-model="receiptId" type="text" name="receiptId" id="receiptId" placeholder="اكتب رقم العملية..." required>
+  <input v-model="receiptId" type="text" name="receiptId" id="receiptId" placeholder="اكتب رقم العملية..." required @keyup.enter="redir">
   <button @click="redir()">عرض الوصل</button>
     </li>
     <li><label for="">عرض جميع الوصولات</label>

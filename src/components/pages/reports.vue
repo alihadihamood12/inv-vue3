@@ -56,7 +56,10 @@
 
 
 <script setup>
-        import { ref } from 'vue';
+
+import { ref, getCurrentInstance } from 'vue';
+const { appContext } = getCurrentInstance();
+const BACKEND_BASE = appContext.config.globalProperties.$backend;
                 const pdfUrl = ref('');
                 const pdfUrlInput = ref('');
                 const loading = ref(false);
@@ -65,8 +68,8 @@
                 const reportType = ref('week');
                 
                 const reportLinks = {
-                    week: 'http://localhost:4000/reports/week',
-                    month: 'http://localhost:4000/reports/month',
+                    week: `${BACKEND_BASE}/reports/week`,
+                    month: `${BACKEND_BASE}/reports/month`,
                 };
                 
                 function setReport(type) {

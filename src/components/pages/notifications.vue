@@ -52,30 +52,53 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, getCurrentInstance } from 'vue';
+import axios from 'axios';
 
-// بيانات تجريبية (استبدلها ببياناتك أو API)
-const products = ref([
-  { id: 1, name: 'منتج 1', qty: 0, expiryDate: '', lastSold: '2025-08-01' },
-  { id: 2, name: 'منتج 2', qty: 2, expiryDate: '', lastSold: '2025-09-01' },
-  { id: 3, name: 'منتج 3', qty: 10, expiryDate: '2024-07-01', lastSold: null },
-  { id: 4, name: 'منتج 4', qty: 5, expiryDate: '', lastSold: '2024-09-10' },
-]);
-const lowStock = computed(() => products.value.filter(p => p.qty <= 5));
-const expired = computed(() => products.value.filter(p => p.expiryDate && new Date(p.expiryDate) < new Date()));
+// الوصول إلى $api من globalProperties
+const { appContext } = getCurrentInstance();
+const API_BASE = appContext.config.globalProperties.$api;
+
+// البيانات القادمة من الـ API
+const products = ref([]);
+const lowStock = ref([]);
+const expired = ref([]);
 const limitDays = ref(14);
 
+// جلب البيانات من السيرفر
+async function fetchNotifications() {
+  try {
+    const res = await axios.get(`${API_BASE}/notifications`, {
+      params: { limit: limitDays.value }
+    });
+    lowStock.value = res.data.lowStock || [];
+    expired.value = res.data.expired || [];
+    products.value = res.data.inactive || [];
+    limitDays.value = res.data.limitDays || limitDays.value;
+  } catch (err) {
+    console.error('خطأ في جلب التنبيهات:', err);
+  }
+}
+
+// حساب إذا في تنبيهات
 const hasAlerts = computed(() =>
-  lowStock.value.length > 0 || expired.value.length > 0 ||
+  lowStock.value.length > 0 ||
+  expired.value.length > 0 ||
   products.value.some(p => !p.lastSold || daysSinceLastSold(p) >= limitDays.value)
 );
 
+// حساب عدد الأيام منذ آخر بيع
 function daysSinceLastSold(p) {
   if (!p.lastSold) return null;
   const now = new Date();
   const lastDate = new Date(p.lastSold);
   return Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
 }
+
+// جلب البيانات عند تحميل الصفحة
+onMounted(() => {
+  fetchNotifications();
+});
 </script>
 
 <style scoped>

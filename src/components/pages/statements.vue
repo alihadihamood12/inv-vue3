@@ -1,39 +1,63 @@
 <template>
-    <Auth routePath="/statements">
-        <h2>إحصائيات المبيعات</h2>
-        <canvas ref="chartRef" width="400" height="150"></canvas>
-    </Auth>
+  <Auth routePath="/statements" @authenticated="loadStats">
+    <h2>إحصائيات المبيعات</h2>
+    <div class="chart-container">
+      <canvas ref="chartRef"></canvas>
+    </div>
+  </Auth>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, getCurrentInstance, nextTick } from 'vue';
+import axios from 'axios';
+
+const { appContext } = getCurrentInstance();
+const API_BASE = appContext.config.globalProperties.$api;
 
 const chartRef = ref(null);
+let chartInstance = null;
 
-onMounted(async () => {
-  // بيانات وهمية للتجربة
-  const data = {
-    labels: ['بيتنجان', 'بتيتة', 'قلادة', 'تيشيرت', 'اسوار', 'ساعة'],
-    values: [12, 19, 7, 15, 10, 22]
-  };
-  if (chartRef.value) {
-    const ctx = chartRef.value.getContext('2d');
-    new Chart(ctx, {
+async function loadStats() {
+  try {
+    const res = await axios.get(`${API_BASE}/stats-data`);
+    const labels = res.data.labels || [];
+    const values = res.data.values || [];
+
+
+    await nextTick(); // ننتظر DOM يرندر الـ canvas
+
+    if (!chartRef.value) {
+      console.warn('⚠️ الـ canvas غير موجود وقت الرسم');
+      return;
+    }
+
+    if (chartInstance) {
+      chartInstance.destroy();
+    }
+
+    chartInstance = new window.Chart(chartRef.value.getContext('2d'), {
       type: 'bar',
       data: {
-        labels: data.labels,
+        labels,
         datasets: [
           {
             label: 'عدد المبيعات',
-            data: data.values,
+            data: values,
             backgroundColor: '#36A2EB',
           },
         ],
       },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false
+      }
     });
+  } catch (err) {
+    console.error('خطأ في جلب بيانات الإحصائيات:', err);
   }
-});
+}
 </script>
+
 
 
 <style scoped>
@@ -67,5 +91,8 @@ h2{
     display: block;
     margin: 0 auto;
   }
+}
+.chart-container {
+  height: 400px;
 }
 </style>

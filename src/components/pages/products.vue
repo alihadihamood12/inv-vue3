@@ -60,10 +60,11 @@
           <span class="cart-item-info">{{ item.name }} × {{ item.qty }} = {{ item.priceOut * item.qty }}</span>
           <span class="cart-btns-wrapper">
             <transition-group name="cart-btns" tag="span" class="cart-btns" v-if="cartHover">
-              <button class="cart-action-btn plus" @click="incCart(item)">+</button>
-              <button class="cart-action-btn minus" @click="decCart(item)" :disabled="item.qty === 1">-</button>
-              <button class="cart-action-btn remove" @click="removeFromCart(item)">✖</button>
+              <button :key="'plus-'+item.id" class="cart-action-btn plus" @click="incCart(item)">+</button>
+              <button :key="'minus-'+item.id" class="cart-action-btn minus" @click="decCart(item)" :disabled="item.qty === 1">-</button>
+              <button :key="'remove-'+item.id" class="cart-action-btn remove" @click="removeFromCart(item)">✖</button>
             </transition-group>
+
           </span>
         </div>
       </div>
@@ -79,37 +80,17 @@
 
 <script setup>
 import axios from 'axios';
-import { ref, computed, onMounted, nextTick } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted, nextTick, getCurrentInstance } from 'vue';
 import ProductInfo from './productInfo.vue';
 
-// إعدادات الباركود من localStorage
+const { appContext } = getCurrentInstance();
+const API_BASE = appContext.config.globalProperties.$api;
+
 const barcodeEnabled = ref(JSON.parse(localStorage.getItem('barcodeEnabled') || 'false'));
 const barcodeMode = ref(localStorage.getItem('barcodeMode') || 'camera');
-const scannerVisible = ref(false);
-const scannerBtnText = ref('📷 امسح الباركود');
-const scanner = ref(null);
-const barcodeInput = ref(null);
-let html5QrcodeScanner2 = null;
-onMounted(() => {
-  barcodeEnabled.value = JSON.parse(localStorage.getItem('barcodeEnabled') || 'false');
-  barcodeMode.value = localStorage.getItem('barcodeMode') || 'camera';
-});
-
-
-
 
 const products = ref([]);
-
-axios.get('http://localhost:3000/products')
-  .then(response => {
-    products.value.push(...response.data);
-  })
-  .catch(error => {
-    console.error('Error fetching products:', error);
-  });
-
-const categories = computed(() => Array.isArray(products.value) ? [...new Set(products.value.map(p => p.category))] : []);
+const categories = computed(() => [...new Set(products.value.map(p => p.category))]);
 const search = ref('');
 const selectedCategory = ref('');
 const showOutOnly = ref(false);
@@ -120,28 +101,30 @@ const cartHover = ref(false);
 const showProductInfo = ref(false);
 const selectedProductId = ref(null);
 
+onMounted(() => {
+  axios.get(`${API_BASE}/products`)
+    .then(res => {
+      products.value = res.data.products || [];
+    })
+    .catch(err => console.error('Error fetching products:', err));
+});
+
 const filteredProducts = computed(() => {
-  let list = Array.isArray(products.value) ? products.value.slice() : [];
+  let list = products.value.slice();
   if (selectedCategory.value) {
     list = list.filter(p => p.category === selectedCategory.value);
   }
   if (search.value) {
     list = list.filter(p => p.name.toLowerCase().includes(search.value.toLowerCase()));
   }
-  // ترتيب المنتجات من الأقل كمية إلى الأعلى
   list.sort((a, b) => a.qty - b.qty);
-  return list.filter(p => !showOutOnly.value ? true : p.qty === 0);
+  return showOutOnly.value ? list.filter(p => p.qty === 0) : list;
 });
-
-const outOfStockProducts = computed(() => Array.isArray(products.value) ? products.value.filter(p => p.qty === 0) : []);
 
 function addToCart(product) {
   const found = cart.value.find(item => item.id === product.id);
-  if (found) {
-    found.qty++;
-  } else {
-    cart.value.push({ ...product, qty: 1 });
-  }
+  if (found) found.qty++;
+  else cart.value.push({ ...product, qty: 1 });
   cartToast.value = true;
 }
 
@@ -156,58 +139,44 @@ function closeProductInfo() {
 }
 
 function returnProduct(id) {
-  const product = products.value.find(p => p.id === id);
-  if (!product) return;
-  axios.patch(`http://localhost:3000/products/${id}`, { qty: product.qty + 1 })
+  axios.post(`${API_BASE}/return-product`, { productId: id })
     .then(() => {
-      product.qty++;
+      const updated = products.value.find(p => p.id === id);
+      if (updated) updated.qty++;
     })
-    .catch(() => {
-      alert('حدث خطأ أثناء إرجاع المنتج');
-    });
-}
-
-function startScanner2() {
-  scannerActive.value = true;
-  nextTick(() => {
-    if (!document.getElementById('scanner')) return;
-    if (html5QrcodeScanner2) {
-      html5QrcodeScanner2.stop();
-      html5QrcodeScanner2 = null;
-    }
-    html5QrcodeScanner2 = new Html5Qrcode('scanner');
-    html5QrcodeScanner2.start(
-      { facingMode: 'environment' },
-      { fps: 10, qrbox: 250 },
-      (decodedText) => {
-        search.value = decodedText;
-        scannerActive.value = false;
-        html5QrcodeScanner2.stop();
-        html5QrcodeScanner2 = null;
-        // Trigger البحث مباشرة بعد وضع القيمة
-        // يمكنك هنا عمل فلترة أو أي منطق إضافي إذا أردت
-      },
-      (errorMessage) => {
-        // يمكن تجاهل الأخطاء البسيطة
-      }
-    );
-  });
-}
-
-function closeScanner2() {
-  if (html5QrcodeScanner2) {
-    html5QrcodeScanner2.stop();
-    html5QrcodeScanner2 = null;
-  }
-  scannerActive.value = false;
+    .catch(() => alert('حدث خطأ أثناء إرجاع المنتج'));
 }
 
 const cartTotal = computed(() => cart.value.reduce((sum, item) => sum + item.priceOut * item.qty, 0));
 
-function checkout() {
-  alert('تم البيع!');
-  cart.value = [];
-  cartToast.value = false;
+async function checkout() {
+  if (cart.value.length === 0) {
+    alert('السلة فارغة');
+    return;
+  }
+
+  try {
+    const res = await axios.post(`${API_BASE}/cart/checkout`, {
+      items: cart.value.map(item => ({ id: item.id, qty: item.qty }))
+    });
+
+    if (res.data.success) {
+      alert('✅ تم البيع بنجاح!');
+      // تحديث الكميات في واجهة المنتجات
+      res.data.sale.items.forEach(soldItem => {
+        const prod = products.value.find(p => p.id === soldItem.productId);
+        if (prod) prod.qty -= soldItem.qty;
+      });
+      // تفريغ السلة
+      cart.value = [];
+      cartToast.value = false;
+    } else {
+      alert('❌ فشل البيع: ' + (res.data.message || 'خطأ غير معروف'));
+    }
+  } catch (err) {
+    console.error('خطأ في البيع:', err);
+    alert('حدث خطأ أثناء البيع');
+  }
 }
 
 function getCartQty(productId) {
@@ -216,14 +185,10 @@ function getCartQty(productId) {
 }
 
 function incCart(item) {
-  if (item.qty < getProductQty(item.id)) {
-    item.qty++;
-  }
+  if (item.qty < getProductQty(item.id)) item.qty++;
 }
 function decCart(item) {
-  if (item.qty > 1) {
-    item.qty--;
-  }
+  if (item.qty > 1) item.qty--;
 }
 function removeFromCart(item) {
   const idx = cart.value.findIndex(i => i.id === item.id);

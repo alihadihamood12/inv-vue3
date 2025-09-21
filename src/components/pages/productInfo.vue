@@ -35,18 +35,27 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, onMounted, defineEmits } from 'vue';
+import { ref, reactive, watch, getCurrentInstance } from 'vue';
 import axios from 'axios';
+
 const props = defineProps({ id: { type: [String, Number], required: true } });
 const emit = defineEmits(['close']);
+
+const { appContext } = getCurrentInstance();
+const API_BASE = appContext.config.globalProperties.$api;
+
 const product = reactive({});
 const editProduct = reactive({});
 const editMode = ref(false);
 
 async function fetchProduct() {
   try {
-    const res = await axios.get(`http://localhost:3000/products/${props.id}`);
-    Object.assign(product, res.data);
+    const res = await axios.get(`${API_BASE}/products/${props.id}`);
+    if (res.data && res.data.product) {
+      Object.assign(product, res.data.product);
+    } else {
+      alert('لم يتم العثور على المنتج');
+    }
   } catch (e) {
     alert('لم يتم العثور على المنتج');
   }
@@ -63,7 +72,7 @@ function cancelEdit() {
 
 async function saveEdit() {
   try {
-    await axios.patch(`http://localhost:3000/products/${props.id}`, editProduct);
+    await axios.put(`${API_BASE}/products/${props.id}`, editProduct);
     Object.assign(product, editProduct);
     editMode.value = false;
     alert('تم تحديث المنتج بنجاح');

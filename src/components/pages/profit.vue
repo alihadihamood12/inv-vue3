@@ -1,87 +1,89 @@
-<template>
-<Auth routePath="/profits">
-  <div class="profit-box">
-    <h2>📈 صفحة الأرباح</h2>
-    <table class="profit-table">
-      <tr>
-        <td>{{ totalBuy.toLocaleString() }} دينار</td>
-        <th>💸 إجمالي المصروف</th>
-      </tr>
-      <tr>
-        <td>{{ totalSell.toLocaleString() }} دينار</td>
-        <th>🛍️ إجمالي المبيعات</th>
-      </tr>
-      <tr :class="['profit-row', profit >= 0 ? 'gain' : 'loss']">
-        <td>{{ profit.toLocaleString() }} دينار</td>
-        <th>📊 الربح الصافي</th>
-      </tr>
-    </table>
-  </div>
-
-  <h3 style="color:#00c2ff; margin-top:40px;">📊 الربح اليومي في هذا الشهر</h3>
-  <div class="chart-container">
-    <canvas ref="dailyProfitChart"></canvas>
-  </div>
-</Auth>
-</template>
-
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, getCurrentInstance, nextTick, onMounted } from 'vue';
 import axios from 'axios';
 
-const products = ref([]);
-const totalSell = ref(50000); // رقم مؤقت
+const { appContext } = getCurrentInstance();
+const API_BASE = appContext.config.globalProperties.$api;
+
+const totalBuy = ref(0);
+const totalSell = ref(0);
+const profit = ref(0);
 const profitDates = ref([]);
 const profitValues = ref([]);
-
-const totalBuy = computed(() => {
-  // اجمع كل الأسعار الشرائية للمنتجات (مثال: priceIn)
-  return products.value.reduce((sum, p) => sum + (p.priceIn ? p.priceIn * (p.qty || 1) : 0), 0);
-});
-
-const profit = computed(() => totalSell.value - totalBuy.value);
-
-onMounted(async () => {
-  // جلب المنتجات من نفس API المنتجات
-  try {
-    const res = await axios.get('http://localhost:3000/products');
-    products.value = res.data;
-  } catch (e) {
-    products.value = [];
-  }
-  // بيانات تجريبية للرسم البياني
-  profitDates.value = [
-    '2025-09-01', '2025-09-02', '2025-09-03', '2025-09-04', '2025-09-05',
-    '2025-09-06', '2025-09-07', '2025-09-08', '2025-09-09', '2025-09-10'
-  ];
-  profitValues.value = [100, 200, 150, 300, 250, 400, 350, 500, 450, 600];
-
-  // رسم الشارت
-  if (window.Chart) {
-    const ctx = dailyProfitChart.value.getContext('2d');
-    new window.Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: profitDates.value,
-        datasets: [{
-          label: '📈 الربح اليومي',
-          data: profitValues.value,
-          borderColor: '#4caf50',
-          backgroundColor: '#4caf5077',
-          fill: true,
-          tension: 0.3
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false
-      }
-    });
-  }
-});
-
 const dailyProfitChart = ref(null);
+
+async function initChart() {
+  try {
+    const res = await axios.get(`${API_BASE}/profit`);
+    totalBuy.value = res.data.totalBuy || 0;
+    totalSell.value = res.data.totalSell || 0;
+    profit.value = res.data.profit || 0;
+
+    if (res.data.profitByDay) {
+      profitDates.value = Object.keys(res.data.profitByDay);
+      profitValues.value = Object.values(res.data.profitByDay);
+    }
+
+    await nextTick(); // ننتظر الـ DOM يرندر الـ canvas
+    if (dailyProfitChart.value && window.Chart) {
+      const ctx = dailyProfitChart.value.getContext('2d');
+      new window.Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: profitDates.value,
+          datasets: [{
+            label: '📈 الربح اليومي',
+            data: profitValues.value,
+            borderColor: '#4caf50',
+            backgroundColor: '#4caf5077',
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
+    }
+  } catch (e) {
+    console.error('خطأ في جلب بيانات الأرباح:', e);
+  }
+}
+
+// إذا الصفحة ما عليها باسورد، نقدر نستدعيها مباشرة
+onMounted(() => {
+  // initChart();
+});
 </script>
+
+<template>
+  <Auth routePath="/profits" @authenticated="initChart">
+    <div class="profit-box">
+      <h2>📈 صفحة الأرباح</h2>
+      <table class="profit-table">
+        <tr>
+          <td>{{ totalBuy.toLocaleString() }} دينار</td>
+          <th>💸 إجمالي المصروف</th>
+        </tr>
+        <tr>
+          <td>{{ totalSell.toLocaleString() }} دينار</td>
+          <th>🛍️ إجمالي المبيعات</th>
+        </tr>
+        <tr :class="['profit-row', profit >= 0 ? 'gain' : 'loss']">
+          <td>{{ profit.toLocaleString() }} دينار</td>
+          <th>📊 الربح الصافي</th>
+        </tr>
+      </table>
+    </div>
+
+    <h3 style="color:#00c2ff; margin-top:40px; margin-left: 50px;">📊 الربح اليومي في هذا الشهر</h3>
+    <div class="chart-container">
+      <canvas ref="dailyProfitChart"></canvas>
+    </div>
+  </Auth>
+</template>
+
 
 <style scoped>
 .profit-box {
@@ -136,7 +138,7 @@ const dailyProfitChart = ref(null);
   text-align: center;
 }
 .chart-container {
-  width: 100%;
+  width: 95%;
   min-height: 320px;
   height: 340px;
   margin: 0 auto;

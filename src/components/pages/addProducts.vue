@@ -69,8 +69,11 @@
 
 <script setup>
 import axios from 'axios';
-import { reactive, ref, onMounted } from 'vue';
+import { reactive, ref, onMounted, getCurrentInstance } from 'vue';
 
+// الوصول إلى $api من globalProperties
+const { appContext } = getCurrentInstance();
+const API_BASE = appContext.config.globalProperties.$api;
 // إعدادات الباركود من localStorage
 const barcodeEnabled = ref(JSON.parse(localStorage.getItem('barcodeEnabled') || 'false'));
 const barcodeMode = ref(localStorage.getItem('barcodeMode') || 'camera');
@@ -87,7 +90,7 @@ const formData = reactive({
 });
 
 function submitForm() {
-  axios.post('http://localhost:3000/products', formData)
+  axios.post(`${API_BASE}/products`, formData)
     .then(response => {
       alert('تم إضافة المنتج بنجاح!');
       // إعادة تعيين النموذج
